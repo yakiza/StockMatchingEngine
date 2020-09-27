@@ -46,3 +46,4 @@ CREATE TABLE tradebook
     userid INTEGER NOT NULL references users(id),
     tradeid INTEGER NOT NULL references orders(id)
 );
+

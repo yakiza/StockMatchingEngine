@@ -1,3 +1,11 @@
+//	Stock Matching Engine
+//
+//	Documentation for Stock Matching API
+//
+//	Scheme: http
+//	BasePath: /order/
+//  Version: 0.0.1
+// swagger:meta
 package main
 
 import (

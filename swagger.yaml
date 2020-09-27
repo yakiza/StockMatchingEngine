@@ -1,0 +1,19 @@
+basePath: /order/
+info:
+  description: |-
+    Documentation for Stock Matching API
+
+    Scheme: http
+  title: Stock Matching Engine
+  version: 0.0.1
+paths:
+  /Users:
+    get:
+      description: Returns a list of all the registered users saved in the database
+      operationId: userList
+      responses:
+        "200":
+          $ref: '#/responses/UserService'
+      tags:
+      - user
+swagger: "2.0"

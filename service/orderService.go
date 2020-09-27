@@ -4,7 +4,6 @@ import (
 	"StockMatchingEngine/models"
 	"encoding/json"
 	"fmt"
-	"log"
 	"sort"
 )
 
@@ -17,17 +16,20 @@ func (o *OrderService) Create(db *DatabaseService) {
 	s, err := db.Exec(
 		"INSERT INTO orders(userid, tickerid, price, quantity, command) VALUES($1, $2, $3, $4, $5) ",
 		o.UserID, o.Ticker, o.Price, o.Quantity, o.Command)
+
 	fmt.Print(s)
 	if err != nil {
 		//Must change this
 		fmt.Println("Something went wrong", err)
 	}
+
+	matchingOrder(db)
 }
 
 //Get is responsible for retrieving the orders from the database
 //and converting them to json objects
-func (o *OrderService) Get(db *DatabaseService) ([]byte, error) {
-	rows, err := db.Query("SELECT id, userid, tickerid, price, quantity, command FROM orders")
+func (o *OrderService) Get(db *DatabaseService) ([]*models.Order, error) {
+	rows, err := db.Query("SELECT id, userid, tickerid, price, quantity, command FROM orders ")
 	if err != nil {
 		fmt.Println("there was an error retrieving the data from the database", err)
 	}
@@ -44,22 +46,34 @@ func (o *OrderService) Get(db *DatabaseService) ([]byte, error) {
 		}
 		orderBucket = append(orderBucket, or)
 	}
-	b, err := json.Marshal(orderBucket)
+
+	for order := range orderBucket {
+		json.Marshal(orderBucket[order])
+	}
+
+	return orderBucket, nil
+}
+
+//matchingOrder is responsible for matching the orders and passing them
+//to the trade service so that the relevant fields in the database can
+//be updated accordingly
+func matchingOrder(db *DatabaseService) {
+	orderService := OrderService{}
+	orderBucket, err := orderService.Get(db)
+	if err != nil {
+		fmt.Println("An error occured while trying to get the order data")
+	}
 
 	BUY := []*models.Order{}
 	SELL := []*models.Order{}
 
-	for i := range orderBucket {
+	for order := range orderBucket {
+		if orderBucket[order].Command == "BUY  " {
+			BUY = append(BUY, orderBucket[order])
 
-		if orderBucket[i].Command == "BUY  " {
-			BUY = append(BUY, orderBucket[i])
-
-		} else if orderBucket[i].Command == "SELL " {
-			SELL = append(SELL, orderBucket[i])
-
+		} else if orderBucket[order].Command == "SELL " {
+			SELL = append(SELL, orderBucket[order])
 		}
-		json.Marshal(orderBucket[i])
-
 	}
 
 	sort.Slice(BUY, func(i, j int) bool {
@@ -69,25 +83,55 @@ func (o *OrderService) Get(db *DatabaseService) ([]byte, error) {
 		return SELL[i].Price > SELL[j].Price
 	})
 
-	for i := range SELL {
-		log.Print("Index", i, "Item", SELL[i], "PRICE ====>", SELL[i].Price)
-	}
-	for i := range BUY {
-		log.Print("Index", i, "Item", BUY[i], "PRICE ====>", BUY[i].Price)
-	}
-
 	highestBuy := BUY[0]
-	// tradeService := &ServiceTrade{}
+	tradeMatches := [][]*models.Order{}
+	var scenario string
+
+	tradeService := &ServiceTrade{}
 	for sellItem := range SELL {
 		if highestBuy.Price >= SELL[sellItem].Price {
-			if highestBuy.Quantity >= SELL[sellItem].Quantity {
+			if highestBuy.Quantity == SELL[sellItem].Quantity {
+				scenario = "equal"
+				tradeMatches = append(tradeMatches)
+				fmt.Println("ENTER EQUAL ")
+				trade := models.Trade{
+					highestBuy.UserID,
+					SELL[sellItem].UserID,
+					SELL[sellItem].Price,
+					SELL[sellItem].Quantity,
+					SELL[sellItem].Ticker}
+
+				tradeService.trade = &trade
+				tradeService.Process(db, scenario, highestBuy.OrderID, SELL[sellItem].OrderID)
+
+			} else if highestBuy.Quantity > SELL[sellItem].Quantity {
+				scenario = "buyerMore"
+
+				trade := models.Trade{
+					highestBuy.UserID,
+					SELL[sellItem].UserID,
+					SELL[sellItem].Price,
+					SELL[sellItem].Quantity,
+					SELL[sellItem].Ticker}
+
+				tradeService.trade = &trade
+				tradeService.Process(db, scenario, highestBuy.OrderID, SELL[sellItem].OrderID)
+
+			} else if highestBuy.Quantity < SELL[sellItem].Quantity {
+				scenario = "sellerMore"
+
+				trade := models.Trade{
+					highestBuy.UserID,
+					SELL[sellItem].UserID,
+					SELL[sellItem].Price,
+					highestBuy.Quantity,
+					SELL[sellItem].Ticker}
+
+				tradeService.trade = &trade
+				tradeService.Process(db, scenario, highestBuy.OrderID, SELL[sellItem].OrderID)
 
 			}
 		}
+
 	}
-
-	return b, nil
-}
-
-func matchingOrder() {
 }
