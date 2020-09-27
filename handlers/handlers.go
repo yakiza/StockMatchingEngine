@@ -17,7 +17,7 @@ func Handler() http.Handler {
 	router := mux.NewRouter()
 
 	getRouter := router.Methods(http.MethodGet).Subrouter()
-	getRouter.HandleFunc("/", getUsers)
+	getRouter.HandleFunc("/users", getUsers)
 
 	postRouter := router.Methods(http.MethodPost).Subrouter()
 	postRouter.HandleFunc("/user/create", createUser)

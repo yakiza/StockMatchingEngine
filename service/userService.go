@@ -21,9 +21,9 @@ func (u *UserService) Get(db *DatabaseService) ([]byte, error) {
 	usrs := make([]*models.User, 0)
 	for rows.Next() {
 		ur := new(models.User)
-		err := rows.Scan(&ur.ID, &ur.Firstname, &ur.Lastname)
+		err := rows.Scan(&ur.ID, &ur.Firstname, &ur.Lastname, &ur.Ticker, &ur.Trades)
 		if err != nil {
-			fmt.Println("There was an error")
+			fmt.Println("There was an error", err)
 		}
 		usrs = append(usrs, ur)
 	}
