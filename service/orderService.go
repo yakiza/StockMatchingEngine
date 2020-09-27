@@ -17,7 +17,7 @@ func (o *OrderService) Create(db *DatabaseService) {
 		"INSERT INTO orders(userid, tickerid, price, quantity, command) VALUES($1, $2, $3, $4, $5) ",
 		o.UserID, o.Ticker, o.Price, o.Quantity, o.Command)
 
-	fmt.Print(s)
+	fmt.Print()
 	if err != nil {
 		//Must change this
 		fmt.Println("Something went wrong", err)
@@ -29,7 +29,7 @@ func (o *OrderService) Create(db *DatabaseService) {
 //Get is responsible for retrieving the orders from the database
 //and converting them to json objects
 func (o *OrderService) Get(db *DatabaseService) ([]*models.Order, error) {
-	rows, err := db.Query("SELECT id, userid, tickerid, price, quantity, command FROM orders ")
+	rows, err := db.Query("SELECT id, userid, tickerid, price, quantity, command FROM orders WHERE order ")
 	if err != nil {
 		fmt.Println("there was an error retrieving the data from the database", err)
 	}
@@ -86,48 +86,34 @@ func matchingOrder(db *DatabaseService) {
 	highestBuy := BUY[0]
 	tradeMatches := [][]*models.Order{}
 	var scenario string
-
+	var tradeVal models.Trade
 	tradeService := &ServiceTrade{}
 	for sellItem := range SELL {
 		if highestBuy.Price >= SELL[sellItem].Price {
+			var trade *models.Trade = &tradeVal
+			trade = &models.Trade{
+				highestBuy.UserID,
+				SELL[sellItem].UserID,
+				SELL[sellItem].Price,
+				SELL[sellItem].Quantity,
+				SELL[sellItem].Ticker}
+			tradeService.trade = trade
 			if highestBuy.Quantity == SELL[sellItem].Quantity {
 				scenario = "equal"
-				tradeMatches = append(tradeMatches)
-				fmt.Println("ENTER EQUAL ")
-				trade := models.Trade{
-					highestBuy.UserID,
-					SELL[sellItem].UserID,
-					SELL[sellItem].Price,
-					SELL[sellItem].Quantity,
-					SELL[sellItem].Ticker}
 
-				tradeService.trade = &trade
+				tradeMatches = append(tradeMatches)
 				tradeService.Process(db, scenario, highestBuy.OrderID, SELL[sellItem].OrderID)
 
 			} else if highestBuy.Quantity > SELL[sellItem].Quantity {
 				scenario = "buyerMore"
 
-				trade := models.Trade{
-					highestBuy.UserID,
-					SELL[sellItem].UserID,
-					SELL[sellItem].Price,
-					SELL[sellItem].Quantity,
-					SELL[sellItem].Ticker}
-
-				tradeService.trade = &trade
 				tradeService.Process(db, scenario, highestBuy.OrderID, SELL[sellItem].OrderID)
 
 			} else if highestBuy.Quantity < SELL[sellItem].Quantity {
 				scenario = "sellerMore"
 
-				trade := models.Trade{
-					highestBuy.UserID,
-					SELL[sellItem].UserID,
-					SELL[sellItem].Price,
-					highestBuy.Quantity,
-					SELL[sellItem].Ticker}
-
-				tradeService.trade = &trade
+				trade.Quantity = highestBuy.Quantity
+				tradeService.trade = trade
 				tradeService.Process(db, scenario, highestBuy.OrderID, SELL[sellItem].OrderID)
 
 			}
