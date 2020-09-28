@@ -7,13 +7,7 @@ Foobar is a Python library for dealing with word pluralization.
 Use the package manager [go get](https://golang.org/pkg/cmd/go/internal/get/) to install gorilla,postgres .
 
 ```bash
-go get github.com/gorilla/mux
-```
-```bash
-go getgithub.com/lib/pq
-```
-```bash
-go get github.com/kataras/iris/v12@master
+git clone https://github.com/yakiza/StockMatchingEngine/
 ```
 
 Set environmental variables 
