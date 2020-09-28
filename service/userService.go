@@ -1,50 +1,45 @@
 package service
 
 import (
-	"StockMatchingEngine/models"
-	"encoding/json"
-	"fmt"
+	"StockMatchingEngine/model"
 )
 
 type UserService struct {
-	*models.User
+	db *DatabaseService
+}
+
+func NewUserService(db *DatabaseService) *UserService {
+	return &UserService{
+		db: db,
+	}
 }
 
 //Get  responsible for retriving the users from the database
-func (u *UserService) Get(db *DatabaseService) ([]byte, error) {
-
-	rows, err := db.Query("SELECT * FROM users")
+func (u *UserService) GetAll() ([]*model.User, error) {
+	rows, err := u.db.Query("SELECT * FROM users")
 	if err != nil {
-		fmt.Println("there was an error retrieving the data from the database")
+		return nil, err
 	}
 	defer rows.Close()
-	usrs := make([]*models.User, 0)
+
+	var users []*model.User
 	for rows.Next() {
-		ur := new(models.User)
-		err := rows.Scan(&ur.ID, &ur.Firstname, &ur.Lastname, &ur.Ticker, &ur.Trades)
+		user := new(model.User)
+		err := rows.Scan(&user.ID, &user.Firstname, &user.Lastname, &user.Ticker, &user.Trades)
 		if err != nil {
-			fmt.Println("There was an error", err)
+			return nil, err
 		}
-		usrs = append(usrs, ur)
+
+		users = append(users, user)
 	}
 
-	b, err := json.Marshal(usrs[0])
-
-	return b, nil
+	return users, nil
 }
 
 //Create responsible for executing the sql query and creating a user
-func (u *UserService) Create(db *DatabaseService) error {
-	s, err := db.Exec(
-		"INSERT INTO users(firstname, lastname) VALUES($1, $2) ",
-		u.Firstname, u.Lastname)
-	fmt.Print(s)
-	if err != nil {
-		//Must change this
-		fmt.Println("IT did not insert the shit in to the db", err)
-		return nil
-	}
-
-	return nil
-
+func (u *UserService) Create(user *model.User) error {
+	_, err := u.db.Exec(
+		`INSERT INTO users (firstname, lastname) VALUES ($1, $2)`,
+		user.Firstname, user.Lastname)
+	return err
 }

@@ -1,11 +1,10 @@
-DROP TABLE tradebook;
-DROP TABLE tickers;
-DROP TABLE trades;
-DROP TABLE orders;
-DROP TABLE users;
+-- DROP TABLE tradebook;
+-- DROP TABLE tickers;
+-- DROP TABLE trades;
+-- DROP TABLE orders;
+-- DROP TABLE users;
 
-
-CREATE TABLE IF NOT EXISTS users
+CREATE TABLE users
 (
     id SERIAL PRIMARY KEY,
     firstname TEXT NOT NULL,
@@ -14,7 +13,7 @@ CREATE TABLE IF NOT EXISTS users
     trades INTEGER
 );
 
-CREATE TABLE IF NOT EXISTS orders
+CREATE TABLE orders
 (
     id SERIAL PRIMARY KEY,
     userID INTEGER NOT NULL references users(id),
@@ -24,7 +23,7 @@ CREATE TABLE IF NOT EXISTS orders
 	command CHARACTER(5)
 );
 
-CREATE TABLE IF NOT EXISTS trades
+CREATE TABLE trades
 (
     id SERIAL PRIMARY KEY,
     buyerid INTEGER NOT NULL,
@@ -34,7 +33,7 @@ CREATE TABLE IF NOT EXISTS trades
     ticker  CHARACTER(5)
 );
 
-CREATE TABLE IF NOT EXISTS tickers
+CREATE TABLE tickers
 (
     id CHARACTER(5) PRIMARY KEY,
     userid INTEGER NOT NULL references users(id),

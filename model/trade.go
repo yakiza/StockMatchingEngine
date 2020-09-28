@@ -1,4 +1,4 @@
-package models
+package model
 
 //Trade structure describing the trade attributes
 type Trade struct {

@@ -1,23 +1,28 @@
 package handlers
 
 import (
-	"net/http"
+	"StockMatchingEngine/service"
 
-	"github.com/gorilla/mux"
+	"github.com/kataras/iris/v12"
 )
 
-//Handler is responsible to make calls to functions based on the url accessed
-func Handler() http.Handler {
+// Router is responsible to make calls to functions based on the url accessed
+func Router(db *service.DatabaseService) func(iris.Party) {
+	return func(r iris.Party) {
+		userRouter := &UserRouter{
+			UserService: service.NewUserService(db),
+		}
 
-	router := mux.NewRouter()
+		orderRouter := &OrderRouter{
+			OrderService: service.NewOrderService(db),
+			TradeService: service.NewTradeService(db),
+		}
 
-	getRouter := router.Methods(http.MethodGet).Subrouter()
-	getRouter.HandleFunc("/users", getUsers)
-	getRouter.HandleFunc("/orders", getOrders)
+		r.Get("/users", userRouter.List)
+		r.Post("/users", userRouter.Create)
 
-	postRouter := router.Methods(http.MethodPost).Subrouter()
-	postRouter.HandleFunc("/user/create", createUser)
-	postRouter.HandleFunc("/order/create", createOrder)
-
-	return router
+		r.Get("/orders", orderRouter.List)
+		r.Post("/orders", orderRouter.Create)
+		r.Post("/orders/{ticker}", orderRouter.ListTickerValues)
+	}
 }

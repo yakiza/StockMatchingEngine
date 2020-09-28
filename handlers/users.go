@@ -1,47 +1,45 @@
 package handlers
 
 import (
-	"StockMatchingEngine/models"
+	"StockMatchingEngine/model"
 	"StockMatchingEngine/service"
-	"encoding/json"
-	"fmt"
-	"net/http"
-	"os"
+
+	"github.com/kataras/iris/v12"
 )
+
+type UserRouter struct {
+	// Dependencies that UserRouter needs.
+	UserService *service.UserService
+}
 
 //	swagger:route GET /Users user userList
 //	Returns a list of all the registered users saved in the database
 //	responses:
 //		200: User
-func getUsers(rw http.ResponseWriter, r *http.Request) {
-
-	db := service.DatabaseService{}
-	db.InitializeDatabaseService(
-		os.Getenv("APP_DB_USERNAME"),
-		os.Getenv("APP_DB_PASSWORD"),
-		os.Getenv("APP_DB_NAME"))
-
-	usrService := service.UserService{}
-	userBaset, err := usrService.Get(&db) //Returns all users in JSON format
-
+func (r *UserRouter) List(ctx iris.Context) {
+	userBasket, err := r.UserService.GetAll()
 	if err != nil {
-		fmt.Println("There was an error trying to get the data from the database\n", err)
+		ctx.Application().Logger().Error(err)
+		ctx.StopWithText(iris.StatusInternalServerError, "Retrieving List failed")
+		return
 	}
-	rw.Header().Set("Content-Type", "application/json")
-	fmt.Fprintf(rw, "%s", userBaset)
+
+	ctx.JSON(userBasket)
 }
 
-//createUser responsible for the creation
-func createUser(rw http.ResponseWriter, r *http.Request) {
-	db := service.DatabaseService{}
-	db.InitializeDatabaseService(
-		os.Getenv("APP_DB_USERNAME"),
-		os.Getenv("APP_DB_PASSWORD"),
-		os.Getenv("APP_DB_NAME"))
+func (r *UserRouter) Create(ctx iris.Context) {
+	user := new(model.User)
 
-	usr := &models.User{}
-	a := json.NewDecoder(r.Body)
-	a.Decode(usr)
-	usrService := service.UserService{usr}
-	usrService.Create(&db)
+	if err := ctx.ReadJSON(user); err != nil {
+		ctx.StopWithError(iris.StatusBadRequest, err)
+		return
+	}
+
+	if err := r.UserService.Create(user); err != nil {
+		ctx.Application().Logger().Error(err)
+		ctx.StopWithText(iris.StatusInternalServerError, "Create failed")
+		return
+	}
+
+	ctx.StatusCode(iris.StatusCreated)
 }

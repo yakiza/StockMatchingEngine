@@ -3,7 +3,8 @@ package service
 import (
 	"database/sql"
 	"fmt"
-	"log"
+
+	_ "github.com/lib/pq"
 )
 
 type DatabaseService struct {
@@ -11,15 +12,21 @@ type DatabaseService struct {
 }
 
 //InitializeDatabaseService creates a connection to the database
-func (d *DatabaseService) InitializeDatabaseService(user, password, dbname string) *sql.DB {
+func (d *DatabaseService) InitializeDatabaseService(host, port, user, password, dbname string) error {
+	// host=%s port=%shost, port,
 	connectionString :=
-		fmt.Sprintf("user=%s password=%s dbname=%s sslmode=disable", user, password, dbname)
+		fmt.Sprintf(" user=%s password=%s dbname=%s sslmode=disable", user, password, dbname)
 
-	var err error
-	d.DB, err = sql.Open("postgres", connectionString)
+	db, err := sql.Open("postgres", connectionString)
 	if err != nil {
-		log.Fatal(err)
+		return err
 	}
 
-	return d.DB
+	err = db.Ping()
+	if err != nil {
+		return err
+	}
+
+	d.DB = db
+	return nil
 }

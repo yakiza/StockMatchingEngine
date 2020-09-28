@@ -1,4 +1,4 @@
-package models
+package model
 
 //Order contains the attributes of the order data type
 type Order struct {

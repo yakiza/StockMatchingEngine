@@ -9,24 +9,45 @@
 package main
 
 import (
-	"StockMatchingEngine/handlers"
-	service "StockMatchingEngine/service"
-	"log"
-	"net/http"
 	"os"
 
-	_ "github.com/lib/pq"
+	"StockMatchingEngine/handlers"
+	"StockMatchingEngine/service"
+
+	"github.com/kataras/iris/v12"
 )
 
 func main() {
-	db := service.DatabaseService{}
-	db.InitializeDatabaseService(
+	app := iris.New()
+
+	db := new(service.DatabaseService)
+	// service.NewDatabaseService(username, password, dbname)
+	err := db.InitializeDatabaseService(
+		os.Getenv("APP_DB_HOST"),
+		os.Getenv("APP_DB_PORT"),
 		os.Getenv("APP_DB_USERNAME"),
 		os.Getenv("APP_DB_PASSWORD"),
 		os.Getenv("APP_DB_NAME"))
+	if err != nil {
+		app.Logger().Fatal(err)
+	}
 
-	router := handlers.Handler()
+	app.PartyFunc("/", handlers.Router(db))
 
-	log.Print("Listening at address 127.0.0.1:8000")
-	http.ListenAndServe(":8000", router)
+	addr := getAddr()
+	app.Listen(addr)
+}
+
+func getAddr() string {
+	addr := ":8000"
+
+	if v := os.Getenv("PORT"); v != "" {
+		if v[0] != ':' {
+			v = ":" + v
+		}
+
+		addr = v
+	}
+
+	return addr
 }

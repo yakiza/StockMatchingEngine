@@ -1,4 +1,4 @@
-package models
+package model
 
 //User contains the attributes of the user data type
 type User struct {

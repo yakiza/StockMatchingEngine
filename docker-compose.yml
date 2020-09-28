@@ -1,0 +1,35 @@
+version: '3.1'
+
+services:
+  db:
+    image: postgres
+    restart: always
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: 1q2w3e4r
+      POSTGRES_DB: stockmatching
+    # POSTGRES_HOST_AUTH_METHOD=trust
+    tty: true
+    volumes:
+     - ./migration:/docker-entrypoint-initdb.d
+    ports:
+      - 5432:5432
+  app:
+    build: .
+    ports:
+      - 8000:8000
+    environment:
+      PORT: 8000
+      APP_DB_HOST: db
+      APP_DB_PORT: 5432
+      APP_DB_USERNAME: postgres
+      APP_DB_PASSWORD: 1q2w3e4r
+      APP_DB_NAME: stockmatching
+    restart: on-failure
+    healthcheck:
+        test: ["CMD", "curl", "-f", "tcp://db:5432"]
+        interval: 30s
+        timeout: 10s
+        retries: 5
+    depends_on:
+      - db
