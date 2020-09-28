@@ -47,14 +47,14 @@ curl -v  127.0.0.1:8000/order/create
 #### Add Order
 
 ```bash
-curl -v  127.0.0.1:8000/user/create -d '{ "firstname": "Example", "lastname": "Example}'
+curl -v  127.0.0.1:8000/users/ -d '{ "firstname": "Example", "lastname": "Example}'
 
 ```
 
 #### View all Oders
 
 ```bash
-curl -v  127.0.0.1:8000/order/create 
+curl -v  127.0.0.1:8000/orders/ 
 
 ```
 
