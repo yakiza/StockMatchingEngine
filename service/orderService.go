@@ -20,7 +20,6 @@ func NewOrderService(db *DatabaseService) *OrderService {
 
 // Create is responsible for inserting the Order into te database
 func (o *OrderService) Create(order *model.Order, tradeService *ServiceTrade) error {
-	log.Println("=================================== - (1A)")
 
 	var currentOrderID int
 	var currentOrderTicker string
@@ -30,7 +29,8 @@ func (o *OrderService) Create(order *model.Order, tradeService *ServiceTrade) er
 	if err != nil {
 		return err
 	}
-
+	//This should be on the function that calls this create function ( I named it create i should have named it something different)
+	//Because this function should do only the order creation ( 1 thing not many)
 	MatchingOrder(o, tradeService, currentOrderID, currentOrderTicker) ///passing the id of the object that was just created and the ticker symbol
 	return nil
 }

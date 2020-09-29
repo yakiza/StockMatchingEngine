@@ -18,7 +18,13 @@ import (
 )
 
 func main() {
-	// app := newApp()
+	app := newApp()
+
+	addr := getAddr()
+	app.Listen(addr)
+}
+
+func newApp() *iris.Application {
 	app := iris.New()
 
 	db := new(service.DatabaseService)
@@ -35,14 +41,9 @@ func main() {
 	}
 
 	app.PartyFunc("/", handlers.Router(db))
-	addr := getAddr()
-	app.Listen(addr)
+
+	return app
 }
-
-// func newApp() *iris.Application {
-
-// 	return app
-// }
 
 func getAddr() string {
 	addr := ":8000"
