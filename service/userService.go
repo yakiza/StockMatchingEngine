@@ -25,7 +25,7 @@ func (u *UserService) GetAll() ([]*model.User, error) {
 	var users []*model.User
 	for rows.Next() {
 		user := new(model.User)
-		err := rows.Scan(&user.ID, &user.Firstname, &user.Lastname, &user.Ticker, &user.Trades)
+		err := rows.Scan(&user.ID, &user.Firstname, &user.Lastname)
 		if err != nil {
 			return nil, err
 		}

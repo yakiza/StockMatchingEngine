@@ -1,16 +1,15 @@
--- DROP TABLE tradebook;
--- DROP TABLE tickers;
--- DROP TABLE trades;
--- DROP TABLE orders;
--- DROP TABLE users;
+
+DROP TABLE trades CASCADE;
+DROP TABLE orders CASCADE;
+DROP TABLE tradebook CASCADE; 
+DROP TABLE tickers CASCADE;
+DROP TABLE users CASCADE;
 
 CREATE TABLE users
 (
     id SERIAL PRIMARY KEY,
     firstname TEXT NOT NULL,
-	lastname TEXT NOT NULL,
-    tickers INTEGER,
-    trades INTEGER
+	lastname TEXT NOT NULL
 );
 
 CREATE TABLE orders

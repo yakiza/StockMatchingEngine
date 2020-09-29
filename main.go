@@ -18,6 +18,7 @@ import (
 )
 
 func main() {
+	// app := newApp()
 	app := iris.New()
 
 	db := new(service.DatabaseService)
@@ -28,15 +29,20 @@ func main() {
 		os.Getenv("APP_DB_USERNAME"),
 		os.Getenv("APP_DB_PASSWORD"),
 		os.Getenv("APP_DB_NAME"))
+
 	if err != nil {
 		app.Logger().Fatal(err)
 	}
 
 	app.PartyFunc("/", handlers.Router(db))
-
 	addr := getAddr()
 	app.Listen(addr)
 }
+
+// func newApp() *iris.Application {
+
+// 	return app
+// }
 
 func getAddr() string {
 	addr := ":8000"

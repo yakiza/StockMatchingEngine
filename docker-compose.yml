@@ -11,7 +11,7 @@ services:
     # POSTGRES_HOST_AUTH_METHOD=trust
     tty: true
     volumes:
-     - ./migration:/docker-entrypoint-initdb.d
+      - ./migration:/docker-entrypoint-initdb.d
     ports:
       - 5432:5432
   app:

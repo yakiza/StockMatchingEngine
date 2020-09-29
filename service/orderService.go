@@ -2,6 +2,7 @@ package service
 
 import (
 	"fmt"
+	"log"
 	"sort"
 
 	"StockMatchingEngine/model"
@@ -19,6 +20,8 @@ func NewOrderService(db *DatabaseService) *OrderService {
 
 // Create is responsible for inserting the Order into te database
 func (o *OrderService) Create(order *model.Order, tradeService *ServiceTrade) error {
+	log.Println("=================================== - (1A)")
+
 	var currentOrderID int
 	var currentOrderTicker string
 	var currentORderCommand string
@@ -28,7 +31,7 @@ func (o *OrderService) Create(order *model.Order, tradeService *ServiceTrade) er
 		return err
 	}
 
-	matchingOrder(o, tradeService, currentOrderID, currentOrderTicker) ///passing the id of the object that was just created and the ticker symbol
+	MatchingOrder(o, tradeService, currentOrderID, currentOrderTicker) ///passing the id of the object that was just created and the ticker symbol
 	return nil
 }
 
@@ -87,13 +90,14 @@ func (o *OrderService) GetLowerBuyHigherSell(ticker string) (float64, float64, e
 		highestSell float64
 	)
 
-	err := o.db.QueryRow("SELECT min(price) FROM orders WHERE quantity > 0 AND tickerid=$1 AND command=SEll",
+	err := o.db.QueryRow("SELECT min(price) FROM orders WHERE quantity > 0 AND tickerid=$1 AND command='SELL'",
 		ticker).Scan(&lowestBuy)
 	if err != nil {
+		log.Print("go")
 		return 0, 0, err
 	}
 
-	err = o.db.QueryRow("SELECT max(price) FROM orders WHERE quantity > 0 AND tickerid=$1 AND command=BUY",
+	err = o.db.QueryRow("SELECT max(price) FROM orders WHERE quantity > 0 AND tickerid=$1 AND command='BUY'",
 		ticker).Scan(&highestSell)
 	if err != nil {
 		return 0, 0, err
@@ -102,10 +106,11 @@ func (o *OrderService) GetLowerBuyHigherSell(ticker string) (float64, float64, e
 	return lowestBuy, highestSell, nil
 }
 
-// matchingOrder is responsible for matching the orders and  passing them
+// MatchingOrder is responsible for matching the orders and  passing them
 // to the trade service so that the relevant fields in the database can
 // be updated accordingly
-func matchingOrder(orderService *OrderService, tradeService *ServiceTrade, orderId int, ticker string) error {
+func MatchingOrder(orderService *OrderService, tradeService *ServiceTrade, orderId int, ticker string) error {
+
 	orderBucket, err := orderService.GetAllActiveOrders(ticker) // retrieving a list of BUY & SELL orers to populate the queues
 	if err != nil {
 		return err
@@ -123,6 +128,7 @@ func matchingOrder(orderService *OrderService, tradeService *ServiceTrade, order
 
 	for sellItem := range sellQueue {
 		if highestBuy.Price >= sellQueue[sellItem].Price {
+			log.Print(highestBuy.Price, " is equal to ", sellQueue[sellItem].Price)
 			*trade = model.Trade{
 				highestBuy.UserID,
 				sellQueue[sellItem].UserID,
