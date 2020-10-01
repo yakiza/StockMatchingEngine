@@ -3,6 +3,7 @@ module StockMatchingEngine
 go 1.15
 
 require (
+	github.com/DATA-DOG/go-sqlmock v1.5.0
 	github.com/Joker/jade v1.0.0 // indirect
 	github.com/flosch/pongo2 v0.0.0-20200913210552-0d938eb266f3 // indirect
 	github.com/gavv/monotime v0.0.0-20190418164738-30dba4353424 // indirect
@@ -10,9 +11,11 @@ require (
 	github.com/iris-contrib/blackfriday v2.0.0+incompatible // indirect
 	github.com/iris-contrib/formBinder v5.0.0+incompatible // indirect
 	github.com/iris-contrib/httpexpect v1.1.2 // indirect
+	github.com/jmoiron/sqlx v1.2.0
 	github.com/kataras/iris v11.1.1+incompatible
 	github.com/kataras/iris/v12 v12.2.0-alpha.0.20200928094845-f224ded7401c
 	github.com/lib/pq v1.8.0
 	github.com/ryanuber/columnize v2.1.2+incompatible // indirect
+	github.com/stretchr/testify v1.6.1
 	github.com/valyala/fasthttp v1.16.0 // indirect
 )

@@ -5,52 +5,63 @@ import (
 	"StockMatchingEngine/service"
 	"encoding/json"
 	"fmt"
-	"log"
 
 	"github.com/kataras/iris/v12"
 )
 
 type OrderRouter struct {
 	// Dependencies that OrdeRrouter needs.
-	OrderService *service.OrderService
-	TradeService *service.ServiceTrade
+	OrderRepo model.Repository
 }
 
-func (r *OrderRouter) List(ctx iris.Context) {
-	orders, err := r.OrderService.GetAll()
-	if err != nil {
-		ctx.StopWithText(iris.StatusInternalServerError, "List Failed")
-		return
-	}
-
-	ctx.JSON(orders)
-}
-
-func (r *OrderRouter) Create(ctx iris.Context) {
-	log.Println("=================================== - (1)")
+//CreateAndMatchOrder calls the method that creates the order.
+//additionally makes a call to matchingOrder to get all matching
+//orders if any exists
+func (r *OrderRouter) CreateAndMatchOrder(ctx iris.Context) {
 	order := new(model.Order)
 
 	if err := ctx.ReadJSON(order); err != nil {
 		ctx.StopWithError(iris.StatusBadRequest, err)
 		return
 	}
-	log.Println("=================================== - (2)")
 
-	if err := r.OrderService.Create(order, r.TradeService); err != nil {
-		log.Println("=================================== - (3)")
+	if err := r.OrderRepo.CreateOrder(order); err != nil {
 		ctx.Application().Logger().Error(err)
 		// fire generic 500 error, client should not be aware the database internals.
 		ctx.StopWithText(iris.StatusInternalServerError, "Create Failed")
 		return
 	}
+	orderMatchingService := service.OrderMatchingService{r.OrderRepo}
+	orderMatchingService.MatchingOrderEngine(order)
 
 	ctx.StatusCode(iris.StatusCreated)
 }
 
+//------------------------------------------------------------------
+//==================================================================
+//------------------------------------------------------------------
+
+// func (r *OrderRouter) List(ctx iris.Context) {
+// 	orders, err := r.OrderService.GetAll()
+// 	if err != nil {
+// 		ctx.StopWithText(iris.StatusInternalServerError, "List Failed")
+// 		return
+// 	}
+
+// 	ctx.JSON(orders)
+// }
+
 func (r *OrderRouter) ListTickerValues(ctx iris.Context) {
 	ticker := ctx.Params().Get("ticker")
 
-	lowestBuy, highestSell, err := r.OrderService.GetLowerBuyHigherSell(ticker)
+	lowestBuy, err := r.OrderRepo.GetTickerLowerBuy(ticker)
+	if err != nil {
+		ctx.Application().Logger().Error(err)
+		ctx.StopWithText(iris.StatusInternalServerError, "List Failed")
+		return
+	}
+
+	highestSell, err := r.OrderRepo.GetTickerHigherSell(ticker)
 
 	if err != nil {
 		ctx.Application().Logger().Error(err)

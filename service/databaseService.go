@@ -7,8 +7,9 @@ import (
 	_ "github.com/lib/pq"
 )
 
+// DatabaseService dependency
 type DatabaseService struct {
-	*sql.DB
+	SQL *sql.DB
 }
 
 //InitializeDatabaseService creates a connection to the database
@@ -26,6 +27,6 @@ func (d *DatabaseService) InitializeDatabaseService(host, port, user, password, 
 		return err
 	}
 
-	d.DB = db
+	d.SQL = db
 	return nil
 }

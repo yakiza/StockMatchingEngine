@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"StockMatchingEngine/service"
+	"StockMatchingEngine/storage"
 
 	"github.com/kataras/iris/v12"
 )
@@ -10,19 +11,18 @@ import (
 func Router(db *service.DatabaseService) func(iris.Party) {
 	return func(r iris.Party) {
 		userRouter := &UserRouter{
-			UserService: service.NewUserService(db),
+			OrderRepo: storage.NewPostgresOrderRepository(db),
 		}
 
 		orderRouter := &OrderRouter{
-			OrderService: service.NewOrderService(db),
-			TradeService: service.NewTradeService(db),
+			OrderRepo: storage.NewPostgresOrderRepository(db),
 		}
 
-		r.Get("/users", userRouter.List)
+		// r.Get("/users", userRouter.List)
 		r.Post("/users", userRouter.Create)
 
-		r.Get("/orders", orderRouter.List)
-		r.Post("/orders", orderRouter.Create)
+		// r.Get("/orders", orderRouter.List)
+		r.Post("/orders", orderRouter.CreateAndMatchOrder)
 		r.Post("/orders/{ticker}", orderRouter.ListTickerValues)
 	}
 }

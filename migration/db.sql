@@ -5,6 +5,9 @@ DROP TABLE tradebook CASCADE;
 DROP TABLE tickers CASCADE;
 DROP TABLE users CASCADE;
 
+CREATE TYPE commandEnum AS ENUM ('BUY', 'SELL');
+
+
 CREATE TABLE users
 (
     id SERIAL PRIMARY KEY,
@@ -19,7 +22,7 @@ CREATE TABLE orders
 	tickerID TEXT NOT NULL,
 	price NUMERIC(10,2) NOT NULL ,
 	quantity INTEGER NOT NULL,
-	command CHARACTER(5)
+	command commandEnum
 );
 
 CREATE TABLE trades
