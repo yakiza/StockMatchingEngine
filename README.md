@@ -3,7 +3,7 @@
 
 ## Installation
 
-Use the package manager [go get](https://golang.org/pkg/cmd/go/internal/get/) to install gorilla,postgres .
+Use the package manager [go get](https://golang.org/pkg/cmd/go/internal/get/) to install Iris ,postgres .
 
 ```bash
 git clone https://github.com/yakiza/StockMatchingEngine/
