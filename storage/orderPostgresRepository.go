@@ -31,15 +31,14 @@ func NewPostgresOrderRepository(db *service.DatabaseService) *PostgresOrderRepos
 
 //CreateOrder performs the SQL query that inserts a new order into the database
 func (p PostgresOrderRepository) CreateOrder(order *model.Order) error {
-	err := p.DB.SQL.QueryRow(
-		`INSERT INTO 
-			orders(userid, tickerid, price, quantity, command) 
-		VALUES
-			($1, $2, $3, $4, $5)`,
+	_, err := p.DB.Exec(`
+	INSERT INTO 
+		orders (userid, tickerid, price, quantity, command) 
+	VALUES ($1, $2, $3, $4, $5)`,
 		order.UserID, order.Ticker, order.Price, order.Quantity, order.Command)
 
 	if err != nil {
-		return nil
+		return err
 	}
 
 	return nil
@@ -47,7 +46,7 @@ func (p PostgresOrderRepository) CreateOrder(order *model.Order) error {
 
 // GerActiveOrders is responsible for retrieving all the active orders and returning them
 func (p PostgresOrderRepository) GetActiveOrders(ticker string) (*sql.Rows, error) {
-	rows, err := p.DB.SQL.Query(
+	rows, err := p.DB.Query(
 		`SELECT
 			id, userid, tickerid, price, quantity, command
 		FROM
@@ -55,7 +54,7 @@ func (p PostgresOrderRepository) GetActiveOrders(ticker string) (*sql.Rows, erro
 		WHERE
 			quantity > 0
 		AND
-			tickerid=$1 `, ticker)
+			tickerid=? `, ticker)
 	if err != nil {
 		return nil, err
 	}
@@ -66,7 +65,7 @@ func (p PostgresOrderRepository) GetActiveOrders(ticker string) (*sql.Rows, erro
 // UpdateOrderQuantity is responsible for replacing the current quantity field to the
 // quantity passed as an argument
 func (p PostgresOrderRepository) UpdateOrderQuantity(orderID, quantity int) error {
-	_, err := p.DB.SQL.Exec(`
+	_, err := p.DB.Exec(`
 		UPDATE
 			orders
 		SET
@@ -83,7 +82,7 @@ func (p PostgresOrderRepository) UpdateOrderQuantity(orderID, quantity int) erro
 // IncreaseOrderQuantity is responsible for increasing the current quantity by adding
 // the quantity passed as an argument to the quantity stored already in the field
 func (p PostgresOrderRepository) IncreaseOrderQuantity(orderID, quantity int) error {
-	_, err := p.DB.SQL.Exec("UPDATE orders SET quantity= quantity + $1 WHERE id=$2",
+	_, err := p.DB.Exec("UPDATE orders SET quantity= quantity + $1 WHERE id=$2",
 		quantity, orderID)
 	if err != nil {
 		return err
@@ -95,7 +94,7 @@ func (p PostgresOrderRepository) IncreaseOrderQuantity(orderID, quantity int) er
 // the quantity passed as an argument by the quantity stored in the field
 func (p PostgresOrderRepository) DecreaseOrderQuantity(orderID, quantity int) error {
 
-	_, err := p.DB.SQL.Exec("UPDATE orders SET quantity= quantity - $1 WHERE id=$2",
+	_, err := p.DB.Exec("UPDATE orders SET quantity= quantity - $1 WHERE id=$2",
 		quantity, orderID)
 	if err != nil {
 		return err

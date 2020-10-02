@@ -5,10 +5,10 @@ import (
 	"log"
 )
 
-//Here the function does 2 things but i think its okay
+// CreateTickerAddQuantityOrUpdateQuality has crazy name
 func (p PostgresOrderRepository) CreateTickerAddQuantityOrUpdateQuality(trade *model.Trade) error {
 	// ADD INSERTION INTO THE TRADEBOOK PER	HAPS
-	_, err := p.DB.SQL.Exec(
+	_, err := p.DB.Exec(
 		`INSERT INTO
 				tickers(id, userid, quantity)
 			VALUES
@@ -27,7 +27,7 @@ func (p PostgresOrderRepository) CreateTickerAddQuantityOrUpdateQuality(trade *m
 // ORDER BUT THAT FALLS OUT OF THE SCOPE OF THIS APP SO THIS IS BEING USED INSTEAD.
 func (p PostgresOrderRepository) CreateTickerOrSubstractQuantity(trade *model.Trade) error {
 
-	_, err := p.DB.SQL.Exec(
+	_, err := p.DB.Exec(
 		`INSERT INTO 
 			tickers(id, userid, quantity) 
 		VALUES
@@ -46,7 +46,7 @@ func (p PostgresOrderRepository) CreateTickerOrSubstractQuantity(trade *model.Tr
 func (p PostgresOrderRepository) GetTickerLowerBuy(ticker string) (float64, error) {
 	var lowestBuy float64
 
-	err := p.DB.SQL.QueryRow("SELECT min(price) FROM orders WHERE quantity > 0 AND tickerid=$1 AND command='SELL'",
+	err := p.DB.QueryRow("SELECT min(price) FROM orders WHERE quantity > 0 AND tickerid=$1 AND command='SELL'",
 		ticker).Scan(&lowestBuy)
 	if err != nil {
 		log.Print("go")
@@ -59,7 +59,7 @@ func (p PostgresOrderRepository) GetTickerLowerBuy(ticker string) (float64, erro
 func (p PostgresOrderRepository) GetTickerHigherSell(ticker string) (float64, error) {
 	var highestSell float64
 
-	err := p.DB.SQL.QueryRow("SELECT max(price) FROM orders WHERE quantity > 0 AND tickerid=$1 AND command='BUY'",
+	err := p.DB.QueryRow("SELECT max(price) FROM orders WHERE quantity > 0 AND tickerid=$1 AND command='BUY'",
 		ticker).Scan(&highestSell)
 	if err != nil {
 		return 0, err

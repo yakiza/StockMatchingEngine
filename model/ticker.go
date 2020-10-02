@@ -1,5 +1,5 @@
 package model
 
 type Ticker struct {
-	id string `json:"id"`
+	ID string `json:"id"`
 }

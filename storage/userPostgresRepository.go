@@ -4,7 +4,7 @@ import "StockMatchingEngine/model"
 
 //Create responsible for executing the sql query and creating a user
 func (p PostgresOrderRepository) CreateUser(user *model.User) error {
-	_, err := p.DB.SQL.Exec(
+	_, err := p.DB.Exec(
 		`INSERT INTO
 			users(firstname, lastname)
 		VALUES

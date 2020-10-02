@@ -1,5 +1,5 @@
-# docker build -t StockMatchingEngine . 
-# docker run --rm -it -p 8080:8080 StockMatchingEngine:latest
+# docker build -t stockmatchingengine . 
+# docker run --rm -it -p 8000:8000 stockmatchingengine:latest
 FROM golang:latest AS builder
 RUN apt-get update
 ENV GO111MODULE=on \

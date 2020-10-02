@@ -1,46 +1,42 @@
 package main
 
-// import (
-// 	"encoding/json"
-// 	"log"
-// 	"os"
-// 	"testing"
+import (
+	"log"
+	"os"
+	"testing"
 
-// 	"StockMatchingEngine/model"
-// 	"StockMatchingEngine/service"
+	"StockMatchingEngine/service"
+)
 
-// 	"github.com/kataras/iris/v12/httptest"
-// )
+var a service.DatabaseService
 
-// var a service.DatabaseService
+func TestMain(m *testing.M) {
+	a.InitializeDatabaseService(
+		os.Getenv("APP_DB_HOST"),
+		os.Getenv("APP_DB_PORT"),
+		os.Getenv("APP_DB_USERNAME"),
+		os.Getenv("APP_DB_PASSWORD"),
+		os.Getenv("APP_DB_NAME"))
 
-// func TestMain(m *testing.M) {
-// 	a.InitializeDatabaseService(
-// 		os.Getenv("APP_DB_HOST"),
-// 		os.Getenv("APP_DB_PORT"),
-// 		os.Getenv("APP_DB_USERNAME"),
-// 		os.Getenv("APP_DB_PASSWORD"),
-// 		os.Getenv("APP_DB_NAME"))
+	ensureTableExists()
+	code := m.Run()
+	os.Exit(code)
+}
 
-// 	ensureTableExists()
-// 	code := m.Run()
-// 	os.Exit(code)
-// }
+//ensureTableExists tries to execute the sql query in order to check if database connection exists
+func ensureTableExists() {
+	if _, err := a.DB.Exec(tableCreationQuery); err != nil {
+		log.Fatal(err)
+	}
+}
 
-// //ensureTableExists tries to execute the sql query in order to check if database connection exists
-// func ensureTableExists() {
-// 	if _, err := a.DB.Exec(tableCreationQuery); err != nil {
-// 		log.Fatal(err)
-// 	}
-// }
-
-// const tableCreationQuery = `
-// CREATE TABLE IF NOT EXISTS users
-// (
-//     id SERIAL PRIMARY KEY,
-//     firstname TEXT NOT NULL,
-// 	lastname TEXT NOT NULL
-// )`
+const tableCreationQuery = `
+CREATE TABLE IF NOT EXISTS users
+(
+    id SERIAL PRIMARY KEY,
+    firstname TEXT NOT NULL,
+	lastname TEXT NOT NULL
+)`
 
 // //Testing the API  functionality of creation and retireving data
 // func TestStockMatchingEngineAPI(t *testing.T) {

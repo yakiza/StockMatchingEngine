@@ -4,7 +4,7 @@ import "StockMatchingEngine/model"
 
 // CreateTrade is responsible to execute the query that adds a trade to the database
 func (p PostgresOrderRepository) CreateTrade(trade *model.Trade) error {
-	_, err := p.DB.SQL.Exec(
+	_, err := p.DB.Exec(
 		`INSERT INTO
 			trades(buyerid, sellerid, price, quantity, ticker)
 		VALUES

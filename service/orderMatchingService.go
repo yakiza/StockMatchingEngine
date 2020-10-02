@@ -3,7 +3,6 @@ package service
 import (
 	"StockMatchingEngine/model"
 	"database/sql"
-	"fmt"
 	"sort"
 )
 
@@ -61,31 +60,21 @@ func matchingOrder(orderQueueForMatch []*model.Order, order *model.Order) ([]*mo
 		otherQueue model.Order
 	)
 
-	fmt.Println(order)
-	fmt.Printf(" %#v\n", []byte(order.Command))
-
 	if order.Command == "BUY" {
-
 		buy = order
 		sell = &otherQueue
-
 	} else if order.Command == "SELL" {
-
 		buy = &otherQueue
 		sell = order
 	}
 
-	// var tradeVal model.Trade
-	// var trade *model.Trade = &tradeVal
 	for orderItem := range orderQueueForMatch {
 		otherQueue = *orderQueueForMatch[orderItem]
 
 		if buy.Price >= sell.Price {
-
 			if buy.Quantity == sell.Quantity {
-
 				matchedOrders = append(matchedOrders, sell)
-				// matchedOrders = matchedOrders[1:] remove first itm from queue
+				// matchedOrders = matchedOrders[1:] //remove first itm from queue
 
 			} else if buy.Quantity > sell.Quantity {
 				matchedOrders = append(matchedOrders, sell)
@@ -96,7 +85,6 @@ func matchingOrder(orderQueueForMatch []*model.Order, order *model.Order) ([]*mo
 			}
 		}
 	}
-
 	return matchedOrders, nil
 }
 

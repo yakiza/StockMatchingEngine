@@ -5,17 +5,12 @@ import (
 	"StockMatchingEngine/service"
 	"StockMatchingEngine/storage"
 	"database/sql"
+	"fmt"
 	"log"
 	"testing"
 
 	"github.com/DATA-DOG/go-sqlmock"
 )
-
-// Exec mock of the exec function of pg library
-// func (mock *MockDatabaseService) Exec(query string) (interface{}, error) {
-// 	args := mock.Called(query)
-// 	return nil, args.Error(1)
-// }
 
 func NewMock() (*sql.DB, sqlmock.Sqlmock) {
 	db, mock, err := sqlmock.New()
@@ -25,20 +20,21 @@ func NewMock() (*sql.DB, sqlmock.Sqlmock) {
 
 	return db, mock
 }
-
-func TestCreateOrder(t *testing.T) {
+func mockInit() (sqlmock.Sqlmock, storage.PostgresOrderRepository) {
 	db, mock := NewMock()
 	serv := &service.DatabaseService{db}
 	repo := storage.PostgresOrderRepository{serv}
-	defer func() {
-		repo.DB.SQL.Close()
-	}()
+
+	return mock, repo
+}
+
+func TestCreateOrder(t *testing.T) {
+	mock, repo := mockInit()
 
 	order := model.Order{1, 1, "AABB", 50.50, 50, "SELL"}
-	mock.ExpectBegin()
 	mock.ExpectExec("INSERT INTO orders").
-		WithArgs(order.UserID, order.Ticker, order.Price, order.Quantity, order.Command)
-	mock.ExpectCommit()
+		WithArgs(order.UserID, order.Ticker, order.Price, order.Quantity, order.Command).
+		WillReturnResult(sqlmock.NewResult(1, 1))
 
 	// now we execute our method
 	if err := repo.CreateOrder(&order); err != nil {
@@ -50,20 +46,52 @@ func TestCreateOrder(t *testing.T) {
 	}
 }
 
-// func TestCreateOrderFail(t *testing.T) {
-// 	db, mock := NewMock()
-// 	repo := &storage.PostgresOrderRepository{db}
-// 	defer func() {
-// 		repo.DB.Close()
-// 	}()
-// 	order := model.Order{}
+func TestCreateOrderFail(t *testing.T) {
+	mock, repo := mockInit()
 
-// 	mock.ExpectBegin()
-// 	mock.ExpectExec("INSERT INTO orders").
-// 		WithArgs().
-// 		WillReturnError(fmt.Errorf("some error"))
-// 	mock.ExpectRollback()
+	order := model.Order{1, 1, "AABB", 50.50, 50, "SELL"}
+	mock.ExpectExec("INSERT INTO orders").
+		WithArgs(order.UserID, order.Ticker, order.Price, order.Quantity, order.Command).
+		WillReturnError(fmt.Errorf("some error"))
 
+	// now we execute our method
+	if err := repo.CreateOrder(&order); err == nil {
+		t.Errorf("was expecting an error, but there was none")
+	}
+
+	// we make sure that all expectations were met
+	if err := mock.ExpectationsWereMet(); err != nil {
+		t.Errorf("there were unfulfilled expectations: %s", err)
+	}
+}
+
+// }
+// func TestGetActiveOrders(t *testing.T) {
+// 	mock, repo := mockInit()
+// 	ticker := "AABB"
+// 	mock.ExpectExec(`SELECT
+// 		id, userid, tickerid, price, quantity, command
+// 		FROM
+// 			orders
+// 		WHERE
+// 			quantity > 0
+// 		AND
+// 			tickerid=? `).
+// 		WithArgs(ticker)
+
+// 	// now we execute our method
+// 	if _, err := repo.GetActiveOrders(ticker); err != nil {
+// 		t.Errorf("error was not expected while updating stats: %s", err)
+// 	}
+// 	// we make sure that all expectations were met
+// 	if err := mock.ExpectationsWereMet(); err != nil {
+// 		t.Errorf("there were unfulfilled expectations: %s", err)
+// 	}
+
+// }
+
+// func TestGetActiveOrdersFail(t *testing.T) {
+// 	mock, repo := mockInit()
 // 	// now we execute our method
 // 	if err := repo.CreateOrder(&order); err == nil {
 // 		t.Errorf("was expecting an error, but there was none")
@@ -75,39 +103,81 @@ func TestCreateOrder(t *testing.T) {
 // 	}
 // }
 
-// }
-// func TestCreateOrderFail(t *testing.T) {
-// 	db, mock := NewMock()
-// 	repo := &storage.PostgresOrderRepository{db}
-// 	defer func() {
-// 		repo.DB.Close()
-// 	}()
-// 	order := model.Order{}
-// 	mock.ExpectBegin()
-// 	mock.ExpectExec("INSERT INTO orders").
-// 		WithArgs(5).
-// 		WillReturnResult(sqlmock.NewResult(1, 1))
-// 	mock.ExpectCommit()
+// func TestUpdateOrderQuantity(t *testing.T) {
+// 	mock, repo := mockInit()
+
+// 	// now we execute our method
+// 	if err := repo.CreateOrder(&order); err != nil {
+// 		t.Errorf("error was not expected while updating stats: %s", err)
+// 	}
+// 	// we make sure that all expectations were met
+// 	if err := mock.ExpectationsWereMet(); err != nil {
+// 		t.Errorf("there were unfulfilled expectations: %s", err)
+// 	}
 
 // }
 
-// 	db := new(MockDatabaseService)
-// 	OrderRepo := storage.NewPostgresOrderRepository(db) //arrange  -> preparation
-// 	order := model.Order{1, 1, "AABB", 50.50, 50, "SELL"}
-// 	db.On("Exec").Return(nil, nil)
+// func TestUpdateOrderQuantityFail(t *testing.T) {
+// 	mock, repo := mockInit()
+// 	// now we execute our method
+// 	if err := repo.CreateOrder(); err == nil {
+// 		t.Errorf("was expecting an error, but there was none")
+// 	}
 
-// 	err := OrderRepo.CreateOrder(order) // act
-
-// 	assert.Nil(err) //
+// 	// we make sure that all expectations were met
+// 	if err := mock.ExpectationsWereMet(); err != nil {
+// 		t.Errorf("there were unfulfilled expectations: %s", err)
+// 	}
 // }
 
-// func TestCreateOrderFail(t *testing.T) {
-// 	db := new(MockDatabaseService)
-// 	OrderRepo := storage.NewPostgresOrderRepository(db) //arrange  -> preparation
-// 	order := model.Order{1, 1, "AABB", 50.50, 50, "SELL"}
-// 	db.On("Exec").Return(nil, error)
+// func TestIncreaseOrderQuantity(t *testing.T) {
+// 	mock, repo := mockInit()
 
-// 	err := OrderRepo.CreateOrder(order) // act
+// 	// now we execute our method
+// 	if err := repo.CreateOrder(&order); err != nil {
+// 		t.Errorf("error was not expected while updating stats: %s", err)
+// 	}
+// 	// we make sure that all expectations were met
+// 	if err := mock.ExpectationsWereMet(); err != nil {
+// 		t.Errorf("there were unfulfilled expectations: %s", err)
+// 	}
+// }
+// func TestIncreaseOrderQuantityFail(t *testing.T) {
+// 	mock, repo := mockInit()
+// 	// now we execute our method
+// 	if err := repo.CreateOrder(); err == nil {
+// 		t.Errorf("was expecting an error, but there was none")
+// 	}
 
-// assert.Error(err)
+// 	// we make sure that all expectations were met
+// 	if err := mock.ExpectationsWereMet(); err != nil {
+// 		t.Errorf("there were unfulfilled expectations: %s", err)
+// 	}
+// }
+
+// func TestDecreaseOrderQuantity(t *testing.T) {
+// 	mock, repo := mockInit()
+
+// 	// now we execute our method
+// 	if err := repo.CreateOrder(&order); err != nil {
+// 		t.Errorf("error was not expected while updating stats: %s", err)
+// 	}
+// 	// we make sure that all expectations were met
+// 	if err := mock.ExpectationsWereMet(); err != nil {
+// 		t.Errorf("there were unfulfilled expectations: %s", err)
+// 	}
+// }
+
+// func TestDecreaseOrderQuantityFail(t *testing.T) {
+// 	mock, repo := mockInit()
+
+// 	// now we execute our method
+// 	if err := repo.CreateOrder(); err == nil {
+// 		t.Errorf("was expecting an error, but there was none")
+// 	}
+
+// 	// we make sure that all expectations were met
+// 	if err := mock.ExpectationsWereMet(); err != nil {
+// 		t.Errorf("there were unfulfilled expectations: %s", err)
+// 	}
 // }
