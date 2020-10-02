@@ -4,7 +4,6 @@ import (
 	"StockMatchingEngine/model"
 	"StockMatchingEngine/service"
 	"encoding/json"
-	"fmt"
 
 	"github.com/kataras/iris/v12"
 )
@@ -18,6 +17,7 @@ type OrderRouter struct {
 //additionally makes a call to matchingOrder to get all matching
 //orders if any exists
 func (r *OrderRouter) CreateAndMatchOrder(ctx iris.Context) {
+
 	order := new(model.Order)
 
 	if err := ctx.ReadJSON(order); err != nil {
@@ -70,12 +70,10 @@ func (r *OrderRouter) ListTickerValues(ctx iris.Context) {
 	}
 	lowestBuyJSON, err := json.Marshal(lowestBuy)
 	if err != nil {
-		fmt.Println(err)
 		return
 	}
 	highestSeJSONl, err := json.Marshal(highestSell)
 	if err != nil {
-		fmt.Println(err)
 		return
 	}
 

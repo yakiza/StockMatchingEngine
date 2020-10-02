@@ -14,6 +14,15 @@ CREATE TABLE users
     firstname TEXT NOT NULL,
 	lastname TEXT NOT NULL
 );
+-- CREATE TABLE orders
+-- (
+--     id SERIAL PRIMARY KEY,
+--     userID INTEGER NOT NULL references users(id),
+-- 	tickerID TEXT NOT NULL,
+-- 	price NUMERIC(10,2) NOT NULL ,
+-- 	quantity INTEGER NOT NULL,
+-- 	command CHARACTER(5)
+-- );
 
 CREATE TABLE orders
 (

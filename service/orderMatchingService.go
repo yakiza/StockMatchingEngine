@@ -3,6 +3,7 @@ package service
 import (
 	"StockMatchingEngine/model"
 	"database/sql"
+	"fmt"
 	"sort"
 )
 
@@ -11,85 +12,63 @@ type OrderMatchingService struct {
 	OrderRepo model.Repository
 }
 
-// MatchingOrderEngine isresponsible for carrying out all of the actions
+type BuyOrderMatchingType struct {
+	order *model.Order
+}
+
+type SellOrderMatchingType struct {
+	order *model.Order
+}
+
+// MatchingOrderEngine is responsible for carrying out all of the actions
 // from data retrieval to data preprocessing and update the relevant database
 // fields by calling the update service
 func (omg OrderMatchingService) MatchingOrderEngine(order *model.Order) error {
 	queue, err := omg.getAndPrepareDataForMatching(order)
 	if err != nil {
+
 		return err
 	}
-	matchedOrderBusket, err := matchingOrder(queue, order)
-	if err != nil {
-		return err
-	}
-	//Based on the created order command instanciates the opposite command type struct 
-	if order.Command != "BUY"{
-		buyOrderBasket := BUY{matchedOrderBusket, omg.OrderRepo}
-		buyOrderBasket.Transaction(order)
-	}else if order.Command != "SELL"{
-		sellOrderBasket := SELL{matchedOrderBusket, omg.OrderRepo}
+
+	if order.Command == "BUY" {
+		buyOrderMatching := BuyOrderMatchingType{order}
+		matchedOrderBasket, err := buyOrderMatching.matchingOrder(queue)
+		if err != nil {
+			return err
+		}
+		sellOrderBasket := SellOrderbasket{matchedOrderBasket, omg.OrderRepo}
 		sellOrderBasket.Transaction(order)
+	} else if order.Command == "SELL" {
+		sellOrderMatching := SellOrderMatchingType{order}
+		matchedOrderBasket, err := sellOrderMatching.matchingOrder(queue)
+		if err != nil {
+			return err
+		}
+		buyOrderBasket := BuyOrderbasket{matchedOrderBasket, omg.OrderRepo}
+		buyOrderBasket.Transaction(order)
 	}
 
 	return nil
 }
 
 func (omg OrderMatchingService) getAndPrepareDataForMatching(order *model.Order) ([]*model.Order, error) {
+
 	rows, err := omg.OrderRepo.GetActiveOrders(order.Ticker)
 	if err != nil {
 		return nil, err
 	}
+
 	// defer rows.Close()
 	orderBasket, err := convertRowsToStruct(rows)
 	if err != nil {
 		return nil, err
 	}
 
-	orderQueueForMatch := populateQueues(orderBasket, order.Command)
+	orderQueueForMatch := populateQueues(orderBasket, order)
 	orderQueueForMatch = sortQueue(orderQueueForMatch)
 
 	return orderQueueForMatch, nil
 
-}
-
-// MatchingOrder is responsible for matching the orders and  passing them
-// to the trade service so that the relevant fields in the database can
-// be updated accordingly
-func matchingOrder(orderQueueForMatch []*model.Order, order *model.Order) ([]*model.Order, error) {
-	var matchedOrders []*model.Order
-	var (
-		buy        = new(model.Order)
-		sell       = new(model.Order)
-		otherQueue model.Order
-	)
-
-	if order.Command == "BUY" {
-		buy = order
-		sell = &otherQueue
-	} else if order.Command == "SELL" {
-		buy = &otherQueue
-		sell = order
-	}
-
-	for orderItem := range orderQueueForMatch {
-		otherQueue = *orderQueueForMatch[orderItem]
-
-		if buy.Price >= sell.Price {
-			if buy.Quantity == sell.Quantity {
-				matchedOrders = append(matchedOrders, sell)
-				// matchedOrders = matchedOrders[1:] //remove first itm from queue
-
-			} else if buy.Quantity > sell.Quantity {
-				matchedOrders = append(matchedOrders, sell)
-
-			} else if buy.Quantity < sell.Quantity {
-				matchedOrders = append(matchedOrders, sell)
-
-			}
-		}
-	}
-	return matchedOrders, nil
 }
 
 // ConvertRowsToStruct converts the rows received in to stucts
@@ -117,11 +96,16 @@ func convertRowsToStruct(rows *sql.Rows) ([]*model.Order, error) {
 }
 
 //Populates the corespinding queue
-func populateQueues(orderBucket []*model.Order, command string) []*model.Order {
+func populateQueues(orderBucket []*model.Order, currentOrder *model.Order) []*model.Order {
 	orderQueueForMatch := []*model.Order{}
 
 	for order := range orderBucket {
-		if orderBucket[order].Command != command {
+		// log.Printf("%T\n", currentOrder.Command)
+		// log.Printf(" %#v\n", []byte(currentOrder.Command))
+		// fmt.Println("--------------------------------------")
+		// log.Printf("%T\n", orderBucket[order].Command)
+		// log.Printf(" %#v\n", []byte(orderBucket[order].Command))
+		if orderBucket[order].Command != currentOrder.Command {
 			orderQueueForMatch = append(orderQueueForMatch, orderBucket[order])
 		}
 	}
@@ -137,4 +121,58 @@ func sortQueue(queue []*model.Order) []*model.Order {
 	})
 
 	return queue
+}
+
+// MatchingOrder is responsible for matching the orders and  passing them
+// to the trade service so that the relevant fields in the database can
+// be updated accordingly
+func (b BuyOrderMatchingType) matchingOrder(orderQueueForMatch []*model.Order) ([]*model.Order, error) {
+	var matchedOrders []*model.Order
+	for order := range orderQueueForMatch {
+		if b.order.Price >= orderQueueForMatch[order].Price {
+			if b.order.Quantity == orderQueueForMatch[order].Quantity {
+				b.order.Quantity = 0
+				matchedOrders = append(matchedOrders, orderQueueForMatch[order])
+				fmt.Println(b.order.Price, "matched with", orderQueueForMatch[order])
+
+			} else if b.order.Quantity > orderQueueForMatch[order].Quantity {
+				b.order.Quantity -= orderQueueForMatch[order].Quantity
+				matchedOrders = append(matchedOrders, orderQueueForMatch[order])
+				fmt.Println(b.order, "matched with", orderQueueForMatch[order])
+				orderQueueForMatch = orderQueueForMatch[1:] //remove first item from queue
+
+			} else if b.order.Quantity < orderQueueForMatch[order].Quantity {
+				orderQueueForMatch[order].Quantity -= b.order.Quantity
+				matchedOrders = append(matchedOrders, orderQueueForMatch[order])
+				fmt.Println(b.order, "matched with", orderQueueForMatch[order])
+			}
+		}
+	}
+	return matchedOrders, nil
+
+}
+
+// MatchingOrder is responsible for matching the orders and  passing them
+// to the trade service so that the relevant fields in the database can
+// be updated accordingly
+func (s SellOrderMatchingType) matchingOrder(orderQueueForMatch []*model.Order) ([]*model.Order, error) {
+	var matchedOrders []*model.Order
+	for order := range orderQueueForMatch {
+		if s.order.Quantity <= orderQueueForMatch[order].Quantity {
+			if s.order.Quantity == orderQueueForMatch[order].Quantity {
+				s.order.Quantity = 0
+				matchedOrders = append(matchedOrders, orderQueueForMatch[order])
+			} else if s.order.Quantity < orderQueueForMatch[order].Quantity {
+				s.order.Quantity -= orderQueueForMatch[order].Quantity
+				matchedOrders = append(matchedOrders, orderQueueForMatch[order])
+				fmt.Println(s.order, "matched with", orderQueueForMatch[order])
+			} else if s.order.Quantity > orderQueueForMatch[order].Quantity {
+				orderQueueForMatch[order].Quantity -= s.order.Quantity
+				matchedOrders = append(matchedOrders, orderQueueForMatch[order])
+				fmt.Println(s.order, "matched with", orderQueueForMatch[order])
+			}
+		}
+	}
+	return matchedOrders, nil
+
 }

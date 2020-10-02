@@ -2,56 +2,65 @@ package service
 
 import (
 	"StockMatchingEngine/model"
+	"fmt"
 )
 
-type BUY struct {
-	Basket []*model.Order
+type BuyOrderbasket struct {
+	Basket    []*model.Order
 	OrderRepo model.Repository
 }
 
-type Trade struct {
-	BuyerID  int     `json:"BuyerorderID"`
-	SellerID int     `json:"sellerOrderID"`
-	Value    float64 `json:"value"`
-	Quantity int     `json:"quantity"`
-	Ticker   string  `json:"ticker"`
-}
+// Transaction is responsible for carrying out the transactions for the matched
+// orders that transactions includes:
+// 1) Creation of trade
+// 2) Substracting sold tickers
+// 3) Adding bought tickers
+// 4) Updating order quantities
+func (b BuyOrderbasket) Transaction(currentOrder *model.Order) {
 
-
-func (b BUY) Transaction(currentOrder *model.Order) {
-	for order := range b.Basket{
+	for order := range b.Basket {
 		trade := model.Trade{
-				b.Basket[order].OrderID,
-				currentOrder.OrderID,
-				b.Basket[order].Price, 
-				b.Basket[order].Quantity,
-				b.Basket[order].Ticker}
+			b.Basket[order].OrderID,
+			currentOrder.OrderID,
+			b.Basket[order].Price,
+			b.Basket[order].Quantity,
+			b.Basket[order].Ticker}
+		b.OrderRepo.CreateTrade(&trade)
 		b.OrderRepo.CreateTickerAddQuantityOrUpdateQuality(&trade)
 		b.OrderRepo.CreateTickerOrSubstractQuantity(&trade)
-		b.OrderRepo.UpdateOrderQuantity(trade.BuyerID, trade.Quantity)
-		b.OrderRepo.UpdateOrderQuantity(trade.SellerID, trade.Quantity)
+		b.OrderRepo.DecreaseOrderQuantity(b.Basket[order].OrderID, trade.Quantity)
+		b.OrderRepo.DecreaseOrderQuantity(currentOrder.OrderID, trade.Quantity)
+
 	}
 }
 
-
-type SELL struct{
-	Basket []*model.Order
+type SellOrderbasket struct {
+	Basket    []*model.Order
 	OrderRepo model.Repository
 }
 
+// Transaction is responsible for carrying out the transactions for the matched
+// orders that transactions includes:
+// 1) Creation of trade
+// 2) Substracting sold tickers
+// 3) Adding bought tickers
+// 4) Updating order quantities
+func (s SellOrderbasket) Transaction(currentOrder *model.Order) {
+	for order := range s.Basket {
+		fmt.Println(s.Basket[order])
+		fmt.Println("TRANSACTION SELL")
 
-func (s SELL) Transaction(currentOrder *model.Order) {
-	for order := range s.Basket{
 		trade := model.Trade{
-				currentOrder.OrderID,
-				s.Basket[order].OrderID,
-				s.Basket[order].Price,
-				s.Basket[order].Quantity,
-				s.Basket[order].Ticker}
-	s.OrderRepo.CreateTickerAddQuantityOrUpdateQuality(&trade)
-	s.OrderRepo.CreateTickerOrSubstractQuantity(&trade)
-	s.OrderRepo.UpdateOrderQuantity(trade.BuyerID, trade.Quantity)
-	s.OrderRepo.UpdateOrderQuantity(trade.SellerID, trade.Quantity)
-
+			currentOrder.OrderID,
+			s.Basket[order].OrderID,
+			s.Basket[order].Price,
+			s.Basket[order].Quantity,
+			s.Basket[order].Ticker}
+		s.OrderRepo.CreateTrade(&trade)
+		s.OrderRepo.CreateTickerAddQuantityOrUpdateQuality(&trade)
+		s.OrderRepo.CreateTickerOrSubstractQuantity(&trade)
+		s.OrderRepo.DecreaseOrderQuantity(s.Basket[order].OrderID, trade.Quantity)
+		s.OrderRepo.DecreaseOrderQuantity(currentOrder.OrderID, trade.Quantity)
 	}
+
 }

@@ -17,7 +17,6 @@ func Router(db *service.DatabaseService) func(iris.Party) {
 		orderRouter := &OrderRouter{
 			OrderRepo: storage.NewPostgresOrderRepository(db),
 		}
-
 		// r.Get("/users", userRouter.List)
 		r.Post("/users", userRouter.Create)
 

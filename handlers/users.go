@@ -14,6 +14,7 @@ type UserRouter struct {
 // Create is responsible to read the POST json data, and for to call the CreateUser
 // method that executes the query that adds the user to the database
 func (r *UserRouter) Create(ctx iris.Context) {
+
 	user := new(model.User)
 	if err := ctx.ReadJSON(user); err != nil {
 		ctx.StopWithError(iris.StatusBadRequest, err)

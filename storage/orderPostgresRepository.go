@@ -44,8 +44,9 @@ func (p PostgresOrderRepository) CreateOrder(order *model.Order) error {
 	return nil
 }
 
-// GerActiveOrders is responsible for retrieving all the active orders and returning them
+// GetActiveOrders is responsible for retrieving all the active orders and returning them
 func (p PostgresOrderRepository) GetActiveOrders(ticker string) (*sql.Rows, error) {
+
 	rows, err := p.DB.Query(
 		`SELECT
 			id, userid, tickerid, price, quantity, command
@@ -54,7 +55,7 @@ func (p PostgresOrderRepository) GetActiveOrders(ticker string) (*sql.Rows, erro
 		WHERE
 			quantity > 0
 		AND
-			tickerid=? `, ticker)
+			tickerid=$1 `, ticker)
 	if err != nil {
 		return nil, err
 	}
@@ -69,7 +70,7 @@ func (p PostgresOrderRepository) UpdateOrderQuantity(orderID, quantity int) erro
 		UPDATE
 			orders
 		SET
-			quantity=$1
+			quantity=quantity$1
 		WHERE
 			id=$2`,
 		quantity, orderID)

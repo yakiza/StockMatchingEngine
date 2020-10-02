@@ -76,7 +76,7 @@ func TestCreateOrderFail(t *testing.T) {
 // 		WHERE
 // 			quantity > 0
 // 		AND
-// 			tickerid=? `).
+// 			tickerid=$1 `).
 // 		WithArgs(ticker)
 
 // 	// now we execute our method
