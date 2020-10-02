@@ -148,6 +148,7 @@ func (b BuyOrderMatchingType) matchingOrder(orderQueueForMatch []*model.Order) (
 			}
 		}
 	}
+	fmt.Println(&matchedOrders)
 	return matchedOrders, nil
 
 }
@@ -173,6 +174,8 @@ func (s SellOrderMatchingType) matchingOrder(orderQueueForMatch []*model.Order) 
 			}
 		}
 	}
+	fmt.Println(&matchedOrders)
+
 	return matchedOrders, nil
 
 }

@@ -1,4 +1,4 @@
-module StockMatchingEngine
+module github.com/yakiza/StockMatchingEngine
 
 go 1.15
 
