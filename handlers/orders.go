@@ -19,7 +19,6 @@ type OrderRouter struct {
 //orders if any exists
 func (r *OrderRouter) CreateAndMatchOrder(ctx iris.Context) {
 	order := new(model.Order)
-	fmt.Println("======================================================= 4")
 
 	if err := ctx.ReadJSON(order); err != nil {
 		ctx.StopWithError(iris.StatusBadRequest, err)
@@ -32,8 +31,6 @@ func (r *OrderRouter) CreateAndMatchOrder(ctx iris.Context) {
 		ctx.StopWithText(iris.StatusInternalServerError, "Create Failed")
 		return
 	}
-	fmt.Println("======================================================= 4")
-
 	orderMatchingService := service.OrderMatchingService{r.OrderRepo}
 	orderMatchingService.MatchingOrderEngine(order)
 

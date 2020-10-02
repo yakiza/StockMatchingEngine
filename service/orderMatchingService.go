@@ -19,13 +19,18 @@ func (omg OrderMatchingService) MatchingOrderEngine(order *model.Order) error {
 	if err != nil {
 		return err
 	}
-	matchedOrderList, err := matchingOrder(queue, order)
+	matchedOrderBusket, err := matchingOrder(queue, order)
 	if err != nil {
 		return err
 	}
-
-	updaterService := UpdaterService{omg.OrderRepo}
-	updaterService.Update(matchedOrderList, order)
+	//Based on the created order command instanciates the opposite command type struct 
+	if order.Command != "BUY"{
+		buyOrderBasket := BUY{matchedOrderBusket, omg.OrderRepo}
+		buyOrderBasket.Transaction(order)
+	}else if order.Command != "SELL"{
+		sellOrderBasket := SELL{matchedOrderBusket, omg.OrderRepo}
+		sellOrderBasket.Transaction(order)
+	}
 
 	return nil
 }
@@ -36,7 +41,6 @@ func (omg OrderMatchingService) getAndPrepareDataForMatching(order *model.Order)
 		return nil, err
 	}
 	// defer rows.Close()
-
 	orderBasket, err := convertRowsToStruct(rows)
 	if err != nil {
 		return nil, err
